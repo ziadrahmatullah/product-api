@@ -8,11 +8,12 @@ import (
 )
 
 type RouterOpts struct {
-	ProductHandler  *handler.ProductHandler
+	ProductHandler *handler.ProductHandler
 }
 
 func NewRouter(opts RouterOpts) http.Handler {
 	r := mux.NewRouter()
 	r.HandleFunc("/products", opts.ProductHandler.HandleListProducts).Methods(http.MethodGet)
+	r.HandleFunc("/products", opts.ProductHandler.HandleCreateProduct).Methods(http.MethodPost)
 	return r
 }

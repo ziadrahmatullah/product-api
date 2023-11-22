@@ -19,7 +19,7 @@ func main() {
 	ph := handler.NewProductHandler(pu)
 
 	opts := server.RouterOpts{
-		ProductHandler: ph,
+		ProductHandler: ph,	
 	}
 	r := server.NewRouter(opts)
 
