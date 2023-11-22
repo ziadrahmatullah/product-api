@@ -7,6 +7,7 @@ import (
 
 type ProductUsecase interface {
 	GetProducts() ([]entity.Product, error)
+	CreateProduct(entity.Product) error
 }
 
 type productUsecase struct {
@@ -25,4 +26,8 @@ func (p *productUsecase) GetProducts() ([]entity.Product, error) {
 		return []entity.Product{}, err
 	}
 	return products, nil
+}
+
+func (p *productUsecase) CreateProduct(newProduct entity.Product) error{
+	return p.productRepository.CreateNewProducts(newProduct)
 }

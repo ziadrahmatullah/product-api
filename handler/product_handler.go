@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"git.garena.com/sea-labs-id/bootcamp/batch-02/shared-projects/product-api/-/tree/ziad-rahmatullah/dto"
+	"git.garena.com/sea-labs-id/bootcamp/batch-02/shared-projects/product-api/-/tree/ziad-rahmatullah/entity"
 	"git.garena.com/sea-labs-id/bootcamp/batch-02/shared-projects/product-api/-/tree/ziad-rahmatullah/usecase"
 )
 
@@ -41,4 +42,31 @@ func (h *ProductHandler) HandleListProducts(w http.ResponseWriter, r *http.Reque
 		json.NewEncoder(w).Encode(resp)
 		return
 	}
+}
+
+func (h *ProductHandler) HandleCreateProduct(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	newProduct := entity.Product{}
+	err := json.NewDecoder(r.Body).Decode(&newProduct)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		resp := dto.Response{
+			Message: err.Error(),
+		}
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	err = h.productUsecase.CreateProduct(newProduct)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		resp := dto.Response{
+			Message: err.Error(),
+		}
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	resp := dto.Response{
+		Data: newProduct,
+	}
+	json.NewEncoder(w).Encode(resp)
 }
