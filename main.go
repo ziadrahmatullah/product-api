@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"net/http"
 
 	"git.garena.com/sea-labs-id/bootcamp/batch-02/shared-projects/product-api/-/tree/ziad-rahmatullah/database"
@@ -11,10 +10,8 @@ import (
 	"git.garena.com/sea-labs-id/bootcamp/batch-02/shared-projects/product-api/-/tree/ziad-rahmatullah/usecase"
 )
 
-var db *sql.DB
-
 func main() {
-	db = database.InitDB()
+	db := database.InitDB()
 	defer db.Close()
 
 	pr := repository.NewProductRepository(db)
@@ -30,6 +27,6 @@ func main() {
 		Addr:    ":8080",
 		Handler: r,
 	}
-	
+
 	srv.ListenAndServe()
 }
