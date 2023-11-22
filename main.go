@@ -126,16 +126,65 @@ func UpdateProductHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteProductHandler(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		resp := Response{
+			Message: err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	err = DeleteProduct(db, id)
+	if err != nil {
+		resp := Response{
+			Message: err.Error(),
+		}
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	resp := Response{
+		Message: "Success deleted",
+	}
+	json.NewEncoder(w).Encode(resp)
 }
 
-func getID(r *http.Request) (int, error) {
-	idStr := mux.Vars(r)["id"]
-	id, err := strconv.Atoi(idStr)
+func GetProductByIdHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	params := mux.Vars(r)
+	id, err := strconv.Atoi(params["id"])
 	if err != nil {
-		return id, fmt.Errorf("invalid id given %s", idStr)
+		resp := Response{
+			Message: err.Error(),
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(resp)
+		return
 	}
-	return id, nil
+	data, err := ListProductsById(db, id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		resp := Response{
+			Message: err.Error(),
+		}
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
+	resp := Response{
+		Data: data,
+	}
+	err = json.NewEncoder(w).Encode(resp)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		resp := Response{
+			Message: err.Error(),
+		}
+		json.NewEncoder(w).Encode(resp)
+		return
+	}
 }
 
 func ListProducts(db *sql.DB) ([]Product, error) {
@@ -162,10 +211,34 @@ func ListProducts(db *sql.DB) ([]Product, error) {
 	return res, nil
 }
 
+func ListProductsById(db *sql.DB, id int) ([]Product, error) {
+	res := []Product{}
+	sql := `SELECT product_id, product_name, quantity, price FROM products p JOIN product_categories pc ON p.product_category_id = pc.product_category_id WHERE product_id = $1`
+	rows, err := db.Query(sql, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var product Product
+
+		err := rows.Scan(&product.Id, &product.Name, &product.Stock, &product.Price)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, product)
+	}
+	err = rows.Err()
+	if err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 func CreateProduct(db *sql.DB, newProduct Product) error {
 	stmt, err := db.Prepare("INSERT INTO products (product_category_id, product_name, quantity, price, created_at, updated_at) VALUES ($1, $2, $3, $4, NOW(), NOW())")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	_, err = stmt.Exec(newProduct.CategoryId, newProduct.Name, newProduct.Stock, newProduct.Price)
 	if err != nil {
@@ -175,9 +248,9 @@ func CreateProduct(db *sql.DB, newProduct Product) error {
 }
 
 func UpdateProduct(db *sql.DB, updateProduct Product) error {
-	stmt, err := db.Prepare("UPDATE products SET product_name = $1, quantity = $2, price = $3, product_category_id = $4 WHERE product_id = $5") 
+	stmt, err := db.Prepare("UPDATE products SET product_name = $1, quantity = $2, price = $3, product_category_id = $4 WHERE product_id = $5")
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	_, err = stmt.Exec(updateProduct.Name, updateProduct.Stock, updateProduct.Price, updateProduct.CategoryId)
 	if err != nil {
@@ -187,9 +260,7 @@ func UpdateProduct(db *sql.DB, updateProduct Product) error {
 }
 
 func DeleteProduct(db *sql.DB, id int) error {
-
-	sql := "DELETE FROM products WHERE id = $1"
-
+	sql := "DELETE FROM products WHERE product_id = $1"
 	_, err := db.Exec(sql, id)
 	if err != nil {
 		return err
@@ -203,8 +274,11 @@ func main() {
 	defer db.Close()
 
 	r := mux.NewRouter()
-	r.HandleFunc("/products", GetProductHandler).Methods("GET")
-	r.HandleFunc("/products", CreateProductHandler).Methods("POST")
+	r.HandleFunc("/products", GetProductHandler).Methods(http.MethodGet)
+	r.HandleFunc("/products", CreateProductHandler).Methods(http.MethodPost)
+	r.HandleFunc("/products/{id}", UpdateProductHandler).Methods(http.MethodPut)
+	r.HandleFunc("/products/{id}", DeleteProductHandler).Methods(http.MethodDelete)
+	r.HandleFunc("/products/{id}", GetProductByIdHandler).Methods(http.MethodGet)
 
 	srv := http.Server{
 		Addr:    ":8080",

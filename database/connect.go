@@ -30,7 +30,7 @@ func InitDB() *sql.DB{
 
 	err = db.Ping()
 	if err != nil {
-		log.Fatalf("Unable to ping:%v\n", err)
+		log.Printf("Unable to ping:%v\n", err)
 	}
 	return db
 }
