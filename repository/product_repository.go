@@ -52,7 +52,7 @@ func (p *productRepository) FindAllProducts() ([]entity.Product, error) {
 func (p *productRepository) CreateNewProduct(newProduct entity.Product) (err error) {
 	stmt, err := p.db.Prepare(`
 		INSERT INTO products (product_category_id, product_name, quantity, price, created_at, updated_at) 
-		VALUES ($1, $2, $3, $4, NOW(), NOW())`)
+		VALUES ($1, $2, $3, $4, NOW(), NOW()) RETURNING id`)
 	if err != nil {
 		return
 	}

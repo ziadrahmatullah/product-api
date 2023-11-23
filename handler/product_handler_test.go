@@ -30,6 +30,24 @@ func removeNewLine(str string) string {
 	return strings.Trim(str, "\n")
 }
 
+// type ProductHandlerTestSuite struct {
+// 	suite.Suite
+// 	pu     *mocks.ProductUsecase
+// 	ph     *handler.ProductHandler
+// 	router http.Handler
+// }
+
+// func (suite *ProductHandlerTestSuite) SetupSubTest() {
+// 	suite.pu = mocks.NewProductUsecase(suite.T())
+// 	suite.ph = handler.NewProductHandler(suite.pu, validator.New())
+// 	opts := server.RouterOpts{
+// 		ProductHandler: suite.ph,
+// 	}
+// 	suite.router = server.NewRouter(opts)
+// }
+
+
+
 func TestProductHandler_HandleListProducts(t *testing.T) {
 	t.Run("should return 200 with product list", func(t *testing.T) {
 		expectedResp, _ := json.Marshal(dto.Response{
@@ -50,4 +68,5 @@ func TestProductHandler_HandleListProducts(t *testing.T) {
 		assert.Equal(t, http.StatusOK, rec.Code)
 		assert.Equal(t, string(expectedResp), removeNewLine(rec.Body.String()))
 	})
+
 }
